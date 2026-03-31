@@ -30,6 +30,8 @@ console.log('VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
 let currentUserId = null;
 
 // DOM узлы
+const logo = document.querySelector(".header__logo");
+
 const placesWrap = document.querySelector(".places__list");
 const profileFormModalWindow = document.querySelector(".popup_type_edit");
 const profileForm = profileFormModalWindow.querySelector(".popup__form");
@@ -61,6 +63,12 @@ const profileAvatar = document.querySelector(".profile__image");
 const avatarFormModalWindow = document.querySelector(".popup_type_edit-avatar");
 const avatarForm = avatarFormModalWindow.querySelector(".popup__form");
 const avatarInput = avatarForm.querySelector(".popup__input");
+
+const usersStatsModalWindow = document.querySelector(".popup_type_info");
+const usersStatsModalTitle = usersStatsModalWindow.querySelector(".popup__title");
+const usersStatsModalInfoList = usersStatsModalWindow.querySelector(".popup__info");
+const usersStatsModalUserList = usersStatsModalWindow.querySelector(".popup__list");
+const usersStatsModalText = usersStatsModalWindow.querySelector(".popup__text");
 
 // ========== ОБРАБОТЧИКИ ДЛЯ КАРТОЧЕК ==========
 
@@ -157,6 +165,90 @@ const handleInfoClick = (cardId) => {
     })
     .catch((err) => {
       console.error("Ошибка при загрузке информации о карточке:", err);
+    });
+};
+
+const handleLogoClick = () => {
+  console.log('📊 Запрос статистики пользователей');
+  
+  // Получаем актуальный список карточек с сервера
+  getCardList()
+    .then((cards) => {
+      console.log('✅ Получено карточек:', cards.length);
+      
+      if (cards.length === 0) {
+        // Если нет карточек, показываем сообщение
+        usersStatsModalTitle.textContent = "Статистика пользователей";
+        usersStatsModalInfoList.innerHTML = '';
+        usersStatsModalUserList.innerHTML = '';
+        usersStatsModalText.textContent = "Нет созданных карточек";
+        openModalWindow(usersStatsModalWindow);
+        return;
+      }
+      
+      // Очищаем предыдущие данные
+      usersStatsModalInfoList.innerHTML = '';
+      usersStatsModalUserList.innerHTML = '';
+      
+      // Устанавливаем заголовок
+      usersStatsModalTitle.textContent = "Статистика пользователей";
+      
+      // Сортируем карточки по дате создания (от старых к новым)
+      const sortedCards = [...cards].sort((a, b) => 
+        new Date(a.createdAt) - new Date(b.createdAt)
+      );
+      
+      const oldestCard = sortedCards[0];      // Самая старая карточка
+      const newestCard = sortedCards[sortedCards.length - 1]; // Самая новая карточка
+      
+      // Общая статистика
+      usersStatsModalInfoList.appendChild(
+        createStatItem("Всего карточек:", cards.length.toString())
+      );
+      
+      usersStatsModalInfoList.appendChild(
+        createStatItem("Всего пользователей:", getUniqueUsersCount(cards).toString())
+      );
+      
+      usersStatsModalInfoList.appendChild(
+        createStatItem("Первая создана:", formatDate(new Date(oldestCard.createdAt)))
+      );
+      
+      usersStatsModalInfoList.appendChild(
+        createStatItem("Последняя создана:", formatDate(new Date(newestCard.createdAt)))
+      );
+      
+      // Подсчет активности пользователей
+      const userActivity = getUserActivity(cards);
+      
+      // Находим самого активного пользователя
+      const mostActiveUser = getMostActiveUser(userActivity);
+      if (mostActiveUser) {
+        usersStatsModalInfoList.appendChild(
+          createStatItem("Самый активный:", `${mostActiveUser.name} (${mostActiveUser.count} карточек)`)
+        );
+      }
+      
+      // Список всех пользователей, создавших карточки
+      usersStatsModalText.textContent = "Пользователи, создавшие карточки:";
+      const uniqueUsers = getUniqueUsers(cards);
+      uniqueUsers.forEach(user => {
+        const userCardCount = userActivity[user._id] || 0;
+        const badge = createUserStatBadge(user);
+        // Добавляем количество карточек к имени
+        const badgeElement = badge.querySelector(".popup__list-item");
+        badgeElement.textContent = `${user.name} (${userCardCount} карточек)`;
+        usersStatsModalUserList.appendChild(badge);
+      });
+      
+      // Открываем модальное окно
+      openModalWindow(usersStatsModalWindow);
+    })
+    .catch((err) => {
+      console.error("❌ Ошибка при загрузке статистики:", err);
+      usersStatsModalTitle.textContent = "Ошибка";
+      usersStatsModalText.textContent = "Не удалось загрузить статистику";
+      openModalWindow(usersStatsModalWindow);
     });
 };
 
@@ -340,6 +432,7 @@ getCardList()
 profileForm.addEventListener("submit", handleProfileFormSubmit);
 cardForm.addEventListener("submit", handleCardFormSubmit);
 avatarForm.addEventListener("submit", handleAvatarFormSubmit);
+logo.addEventListener("click", handleLogoClick);
 
 openProfileFormButton.addEventListener("click", () => {
   profileTitleInput.value = profileTitle.textContent;
@@ -390,3 +483,73 @@ const createUserBadge = (user) => {
   return badge;
 };
 
+// Функция создания элемента списка информации
+const createStatItem = (term, description) => {
+  const template = document.querySelector("#popup-info-definition-template");
+  const statItem = template.content.cloneNode(true);
+  statItem.querySelector(".popup__info-term").textContent = term;
+  statItem.querySelector(".popup__info-description").textContent = description;
+  return statItem;
+};
+
+// Функция создания элемента списка пользователей
+const createUserStatBadge = (user) => {
+  const template = document.querySelector("#popup-info-user-preview-template");
+  const badge = template.content.cloneNode(true);
+  const badgeElement = badge.querySelector(".popup__list-item");
+  badgeElement.textContent = user.name;
+  // Можно добавить аватар, если нужно
+  // badgeElement.style.backgroundImage = `url(${user.avatar})`;
+  return badge;
+};
+
+// Получение уникальных пользователей из карточек
+const getUniqueUsers = (cards) => {
+  const usersMap = new Map();
+  cards.forEach(card => {
+    if (!usersMap.has(card.owner._id)) {
+      usersMap.set(card.owner._id, card.owner);
+    }
+  });
+  return Array.from(usersMap.values());
+};
+
+// Подсчет количества карточек у каждого пользователя
+const getUserActivity = (cards) => {
+  const activity = {};
+  cards.forEach(card => {
+    const userId = card.owner._id;
+    if (!activity[userId]) {
+      activity[userId] = {
+        name: card.owner.name,
+        count: 0
+      };
+    }
+    activity[userId].count++;
+  });
+  return activity;
+};
+
+// Получение самого активного пользователя
+const getMostActiveUser = (userActivity) => {
+  let mostActive = null;
+  let maxCount = 0;
+  
+  Object.values(userActivity).forEach(user => {
+    if (user.count > maxCount) {
+      maxCount = user.count;
+      mostActive = user;
+    }
+  });
+  
+  return mostActive;
+};
+
+// Количество уникальных пользователей
+const getUniqueUsersCount = (cards) => {
+  const uniqueUsers = new Set();
+  cards.forEach(card => {
+    uniqueUsers.add(card.owner._id);
+  });
+  return uniqueUsers.size;
+};
