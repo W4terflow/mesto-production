@@ -24,4 +24,8 @@ export default defineConfig({
     },
   },
   base: './',
+    define: {
+    'import.meta.env.VITE_API_TOKEN': JSON.stringify(process.env.VITE_API_TOKEN),
+    'import.meta.env.VITE_API_BASE_URL': JSON.stringify(process.env.VITE_API_BASE_URL),
+  },
 });
