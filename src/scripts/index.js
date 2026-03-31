@@ -36,6 +36,12 @@ const profileForm = profileFormModalWindow.querySelector(".popup__form");
 const profileTitleInput = profileForm.querySelector(".popup__input_type_name");
 const profileDescriptionInput = profileForm.querySelector(".popup__input_type_description");
 
+const cardInfoModalWindow = document.querySelector(".popup_type_info");
+const cardInfoModalTitle = cardInfoModalWindow.querySelector(".popup__title");
+const cardInfoModalInfoList = cardInfoModalWindow.querySelector(".popup__info");
+const cardInfoModalUserList = cardInfoModalWindow.querySelector(".popup__list");
+const cardInfoModalText = cardInfoModalWindow.querySelector(".popup__text");
+
 const cardFormModalWindow = document.querySelector(".popup_type_new-card");
 const cardForm = cardFormModalWindow.querySelector(".popup__form");
 const cardNameInput = cardForm.querySelector(".popup__input_type_card-name");
@@ -96,6 +102,64 @@ const handleDeleteCardClick = (cardId, cardElement) => {
     });
 };
 
+const handleInfoClick = (cardId) => {
+  console.log('ℹ️ Запрос информации о карточке:', cardId);
+  
+  // Получаем актуальный список карточек с сервера
+  getCardList()
+    .then((cards) => {
+      // Находим нужную карточку по ID
+      const cardData = cards.find(card => card._id === cardId);
+      
+      if (!cardData) {
+        throw new Error('Карточка не найдена');
+      }
+      
+      console.log('📋 Данные карточки:', cardData);
+      
+      // Очищаем предыдущие данные
+      cardInfoModalInfoList.innerHTML = '';
+      cardInfoModalUserList.innerHTML = '';
+      
+      // Устанавливаем заголовок
+      cardInfoModalTitle.textContent = cardData.name;
+      
+      // Добавляем информацию о дате создания
+      const createdDate = new Date(cardData.createdAt);
+      const formattedDate = formatDate(createdDate);
+      cardInfoModalInfoList.appendChild(
+        createInfoItem("Дата создания:", formattedDate)
+      );
+      
+      // Добавляем информацию о количестве лайков
+      const likesCount = cardData.likes.length;
+      cardInfoModalInfoList.appendChild(
+        createInfoItem("Количество лайков:", likesCount.toString())
+      );
+      
+      // Добавляем информацию об авторе
+      cardInfoModalInfoList.appendChild(
+        createInfoItem("Автор:", cardData.owner.name)
+      );
+      
+      // Добавляем список пользователей, лайкнувших карточку
+      if (likesCount > 0) {
+        cardInfoModalText.textContent = "Лайкнули:";
+        cardData.likes.forEach(user => {
+          cardInfoModalUserList.appendChild(createUserBadge(user));
+        });
+      } else {
+        cardInfoModalText.textContent = "Пока никто не лайкнул";
+      }
+      
+      // Открываем модальное окно
+      openModalWindow(cardInfoModalWindow);
+    })
+    .catch((err) => {
+      console.error("Ошибка при загрузке информации о карточке:", err);
+    });
+};
+
 // Функция для отрисовки карточки
 const renderCard = (cardData) => {
   const cardElement = createCardElement(
@@ -104,6 +168,7 @@ const renderCard = (cardData) => {
       onPreviewPicture: handlePreviewPicture,
       onLikeClick: handleLikeClick,
       onDeleteClick: handleDeleteCardClick,
+      onInfoClick: handleInfoClick,
     },
     currentUserId,
     isCardOwner(cardData, currentUserId),
@@ -297,3 +362,31 @@ const allPopups = document.querySelectorAll(".popup");
 allPopups.forEach((popup) => {
   setCloseModalWindowEventListeners(popup);
 });
+
+const formatDate = (date) => {
+  return date.toLocaleDateString("ru-RU", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
+const createInfoItem = (term, description) => {
+  const template = document.querySelector("#popup-info-definition-template");
+  const infoItem = template.content.cloneNode(true);
+  infoItem.querySelector(".popup__info-term").textContent = term;
+  infoItem.querySelector(".popup__info-description").textContent = description;
+  return infoItem;
+};
+
+// Функция создания элемента списка пользователей
+const createUserBadge = (user) => {
+  const template = document.querySelector("#popup-info-user-preview-template");
+  const badge = template.content.cloneNode(true);
+  const badgeElement = badge.querySelector(".popup__list-item");
+  badgeElement.textContent = user.name;
+  // Можно добавить аватар, если нужно
+  // badgeElement.style.backgroundImage = `url(${user.avatar})`;
+  return badge;
+};
+

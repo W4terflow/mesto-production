@@ -19,7 +19,7 @@ const getTemplate = () => {
 
 export const createCardElement = (
   data,
-  { onPreviewPicture, onLikeClick, onDeleteClick },
+  { onPreviewPicture, onLikeClick, onDeleteClick, onInfoClick },
   currentUserId,
   isOwner,
   isLiked
@@ -27,6 +27,7 @@ export const createCardElement = (
   const cardElement = getTemplate();
   const likeButton = cardElement.querySelector(".card__like-button");
   const deleteButton = cardElement.querySelector(".card__control-button_type_delete");
+  const infoButton = cardElement.querySelector(".card__control-button_type_info");
   const cardImage = cardElement.querySelector(".card__image");
   const likeCountElement = cardElement.querySelector(".card__like-count");
 
@@ -48,6 +49,12 @@ export const createCardElement = (
   // Показываем/скрываем кнопку удаления в зависимости от владельца
   if (!isOwner) {
     deleteButton.style.display = "none";
+  }
+
+  if (onInfoClick) {
+    infoButton.addEventListener("click", () => {
+      onInfoClick(data._id);
+    });
   }
   
   // Обработчик лайка
