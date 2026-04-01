@@ -22,6 +22,7 @@ import { createCardElement } from "./components/card.js";
 import { openModalWindow, closeModalWindow, setCloseModalWindowEventListeners } from "./components/modal.js";
 
 console.log('=== ДИАГНОСТИКА ===');
+console.log('Версия: 1');
 console.log('URL страницы:', window.location.href);
 console.log('VITE_API_TOKEN:', import.meta.env.VITE_API_TOKEN ? 'есть' : 'нет');
 console.log('VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
