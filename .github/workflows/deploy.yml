@@ -23,6 +23,11 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Check secrets (optional)
+        run: |
+          echo "VITE_API_TOKEN exists: ${{ secrets.VITE_API_TOKEN != '' && 'YES' || 'NO' }}"
+          echo "VITE_API_BASE_URL exists: ${{ secrets.VITE_API_BASE_URL != '' && 'YES' || 'NO' }}"
+
       - name: Build project
         run: npm run build
         env:
