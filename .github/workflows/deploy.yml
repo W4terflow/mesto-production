@@ -9,10 +9,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
-    env:
-      VITE_API_TOKEN: ${{ secrets.VITE_API_TOKEN }}
-      VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
     
     steps:
       - name: Checkout repository
@@ -29,6 +25,9 @@ jobs:
 
       - name: Build project
         run: npm run build
+        env:
+          VITE_API_TOKEN: ${{ secrets.VITE_API_TOKEN }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
