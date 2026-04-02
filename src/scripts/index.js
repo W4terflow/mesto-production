@@ -21,11 +21,7 @@ import {
 import { createCardElement } from "./components/card.js";
 import { openModalWindow, closeModalWindow, setCloseModalWindowEventListeners } from "./components/modal.js";
 
-console.log('=== ДИАГНОСТИКА ===');
-console.log('Версия: 1');
-console.log('URL страницы:', window.location.href);
-console.log('VITE_API_TOKEN:', import.meta.env.VITE_API_TOKEN ? 'есть' : 'нет');
-console.log('VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
+console.log('Версия проекта: Release 1.0.1');
 
 // Глобальная переменная для хранения ID текущего пользователя
 let currentUserId = null;
@@ -112,8 +108,6 @@ const handleDeleteCardClick = (cardId, cardElement) => {
 };
 
 const handleInfoClick = (cardId) => {
-  console.log('ℹ️ Запрос информации о карточке:', cardId);
-  
   // Получаем актуальный список карточек с сервера
   getCardList()
     .then((cards) => {
@@ -123,8 +117,6 @@ const handleInfoClick = (cardId) => {
       if (!cardData) {
         throw new Error('Карточка не найдена');
       }
-      
-      console.log('📋 Данные карточки:', cardData);
       
       // Очищаем предыдущие данные
       cardInfoModalInfoList.innerHTML = '';
@@ -170,13 +162,9 @@ const handleInfoClick = (cardId) => {
 };
 
 const handleLogoClick = () => {
-  console.log('📊 Запрос статистики пользователей');
-  
   // Получаем актуальный список карточек с сервера
   getCardList()
     .then((cards) => {
-      console.log('✅ Получено карточек:', cards.length);
-      
       if (cards.length === 0) {
         // Если нет карточек, показываем сообщение
         usersStatsModalTitle.textContent = "Статистика пользователей";
@@ -329,8 +317,6 @@ const handleCardFormSubmit = (evt) => {
   const submitButton = evt.submitter;
   const originalText = submitButton.textContent;
   
-  console.log('📝 Текущий userId:', currentUserId);
-
   submitButton.textContent = "Создание...";
   submitButton.disabled = true;
   
@@ -365,17 +351,9 @@ const handleCardFormSubmit = (evt) => {
 
 // ========== ИНИЦИАЛИЗАЦИЯ ==========
 
-console.log('🚀 Начинаем загрузку данных...');
-
 // Загружаем данные пользователя
 getUserInfo()
   .then((userData) => {
-    console.log("✅ Данные пользователя загружены:", userData);
-    console.log("  Имя:", userData.name);
-    console.log("  Описание:", userData.about);
-    console.log("  Аватар:", userData.avatar);
-    console.log("  ID:", userData._id);
-    
     currentUserId = userData._id;
     
     // Обновляем DOM
@@ -384,7 +362,6 @@ getUserInfo()
     
     if (profileAvatar) {
       profileAvatar.style.backgroundImage = `url(${userData.avatar})`;
-      console.log("✅ Аватар обновлен на странице");
     }
   })
   .catch((err) => {
@@ -397,17 +374,11 @@ getUserInfo()
 // Загружаем карточки
 getCardList()
   .then((cards) => {
-    console.log("✅ Карточки загружены, количество:", cards?.length);
-    
     if (cards && cards.length > 0) {
-      console.log("Первая карточка:", cards[0]);
       cards.forEach((card, index) => {
-        console.log(`  Отрисовка карточки ${index + 1}:`, card.name);
         renderCard(card);
       });
-      console.log(`✅ Отрисовано ${cards.length} карточек`);
     } else {
-      console.log("Нет карточек для отображения");
       // Показываем сообщение, что карточек нет
       const emptyMessage = document.createElement('li');
       emptyMessage.textContent = 'Пока нет карточек. Добавьте первую!';
@@ -417,7 +388,7 @@ getCardList()
     }
   })
   .catch((err) => {
-    console.error("❌ Ошибка загрузки карточек:", err);
+    console.error("Ошибка загрузки карточек:", err);
     // Показываем сообщение об ошибке
     const errorMessage = document.createElement('li');
     errorMessage.textContent = 'Не удалось загрузить карточки. Проверьте подключение.';
